@@ -230,7 +230,6 @@
                 gridView: document.getElementById('gridView'),
                 departmentChartEl: document.getElementById('departmentChart'),
                 statusChartEl: document.getElementById('statusChart'),
-                // ... (rest of the UI elements)
                 aiModal: document.getElementById('aiModal'),
                 closeModalBtn: document.getElementById('close-modal-btn'),
                 loadingSpinner: document.getElementById('loading-spinner'),
@@ -306,6 +305,25 @@
                 document.getElementById('kpi-issues').textContent = deleted;
             }
             
+            function setupChartClickHandler(chart, element, filterKey) {
+                element.onclick = (evt) => {
+                    if (!chart) return;
+                    const points = chart.getElementsAtEventForMode(evt, 'native', { intersect: true }, true);
+                    if (points.length) {
+                        const firstPoint = points[0];
+                        const label = chart.data.labels[firstPoint.index];
+                        
+                        // Toggle filter
+                        if (activeFilters[filterKey] === label) {
+                            delete activeFilters[filterKey]; // Remove if clicking the same one again
+                        } else {
+                            activeFilters[filterKey] = label; // Set or change filter
+                        }
+                        applyFilters();
+                    }
+                }
+            }
+
             function renderCharts() {
                 // Data for Department Chart: based on masterData, but filtered by any active status filter.
                 let departmentSourceData = activeFilters.status ? masterData.filter(item => item['Item Status'] === activeFilters.status) : masterData;
@@ -336,6 +354,8 @@
                     },
                     options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
                 });
+                setupChartClickHandler(departmentChart, ui.departmentChartEl, 'department');
+
 
                 // Highlighting for selected status
                 const statusLabels = Object.keys(statusData);
@@ -359,6 +379,7 @@
                     },
                     options: { responsive: true, plugins: { legend: { position: 'top' } } }
                 });
+                setupChartClickHandler(statusChart, ui.statusChartEl, 'status');
             }
 
 
@@ -413,41 +434,41 @@
                 applyFilters();
             });
 
-            function setupChartClickHandler(chart, element, filterKey) {
-                element.onclick = (evt) => {
-                    const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                    if (points.length) {
-                        const firstPoint = points[0];
-                        const label = chart.data.labels[firstPoint.index];
-                        
-                        // Toggle filter
-                        if (activeFilters[filterKey] === label) {
-                            delete activeFilters[filterKey]; // Remove if clicking the same one again
-                        } else {
-                            activeFilters[filterKey] = label; // Set or change filter
-                        }
-                        applyFilters();
-                    }
-                }
-            }
-            
-            // Wait for charts to be created before adding click handlers
-            setTimeout(() => {
-                setupChartClickHandler(departmentChart, ui.departmentChartEl, 'department');
-                setupChartClickHandler(statusChart, ui.statusChartEl, 'status');
-            }, 500);
-
-
             ui.kanbanBtn.addEventListener('click', () => { ui.kanbanView.style.display = 'block'; ui.gridView.style.display = 'none'; ui.kanbanBtn.classList.add('active'); ui.gridBtn.classList.remove('active'); });
             ui.gridBtn.addEventListener('click', () => { ui.gridView.style.display = 'block'; ui.kanbanView.style.display = 'none'; ui.gridBtn.classList.add('active'); ui.kanbanBtn.classList.remove('active'); });
 
-            // --- GEMINI AI & UPLOAD MODAL LOGIC (UNCHANGED) ---
-            // ... [Same logic as before for AI Modal and Upload Panel] ...
+            // --- GEMINI AI & UPLOAD MODAL LOGIC ---
             function openAiModal() { ui.aiModal.style.display = 'block'; ui.loadingSpinner.style.display = 'block'; ui.aiGeneratedText.style.display = 'none'; ui.errorMessage.style.display = 'none'; ui.copyBtn.style.display = 'none'; ui.aiGeneratedText.value = ''; };
             ui.closeModalBtn.addEventListener('click', () => ui.aiModal.style.display = 'none');
             ui.copyBtn.addEventListener('click', () => { ui.aiGeneratedText.select(); document.execCommand('copy'); ui.copyBtn.textContent = 'Copied!'; setTimeout(() => { ui.copyBtn.textContent = 'Copy to Clipboard'; }, 2000); });
             document.body.addEventListener('click', (event) => { if (event.target.classList.contains('generate-copy-btn')) { const details = JSON.parse(event.target.dataset.details); openAiModal(); generateProductCopy(details); } });
-            async function generateProductCopy(details) { const { brand, department, category } = details; const apiKey = ""; const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`; const systemPrompt = "You are an expert e-commerce copywriter. Your goal is to write a short, engaging, and SEO-friendly product description. Use a friendly and persuasive tone. Include a headline and a short paragraph."; const userQuery = `Generate a product description for the following item:\n- Brand: ${brand}\n- Department: ${department}\n- Category: ${category}`; try { const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: userQuery }] }], systemInstruction: { parts: [{ text: systemPrompt }] }, }) }); if (!response.ok) throw new Error(`API error: ${response.statusText}`); const result = await response.json(); const text = result.candidates?.[0]?.content?.parts?.[0]?.text; if (text) { ui.aiGeneratedText.value = text; ui.aiGeneratedText.style.display = 'block'; ui.copyBtn.style.display = 'block'; } else { throw new Error("No content received from API."); } } catch (error) { console.error("Error generating copy:", error); ui.errorMessage.textContent = `Failed to generate copy. ${error.message}`; ui.errorMessage.style.display = 'block'; } finally { ui.loadingSpinner.style.display = 'none'; } }
+            async function generateProductCopy(details) { 
+                const { brand, department, category } = details; 
+                // IMPORTANT: For use outside of this environment (e.g., on GitHub), 
+                // you must replace the empty string with your own Gemini API key.
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`; 
+                const systemPrompt = "You are an expert e-commerce copywriter. Your goal is to write a short, engaging, and SEO-friendly product description. Use a friendly and persuasive tone. Include a headline and a short paragraph."; 
+                const userQuery = `Generate a product description for the following item:\n- Brand: ${brand}\n- Department: ${department}\n- Category: ${category}`; 
+                try { 
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: userQuery }] }], systemInstruction: { parts: [{ text: systemPrompt }] }, }) }); 
+                    if (!response.ok) throw new Error(`API error: ${response.statusText}`); 
+                    const result = await response.json(); 
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text; 
+                    if (text) { 
+                        ui.aiGeneratedText.value = text; ui.aiGeneratedText.style.display = 'block'; 
+                        ui.copyBtn.style.display = 'block'; 
+                    } else { 
+                        throw new Error("No content received from API."); 
+                    } 
+                } catch (error) { 
+                    console.error("Error generating copy:", error); 
+                    ui.errorMessage.textContent = `Failed to generate copy. ${error.message}`; 
+                    ui.errorMessage.style.display = 'block'; 
+                } finally { 
+                    ui.loadingSpinner.style.display = 'none'; 
+                } 
+            }
             function openUploadPanel() { ui.uploadOffcanvas.classList.remove('hidden'); document.body.style.overflow = 'hidden'; setTimeout(() => { ui.uploadOffcanvas.classList.add('opacity-100'); ui.uploadPanel.classList.remove('translate-x-full'); }, 10); }
             function closeUploadPanel() { ui.uploadOffcanvas.classList.remove('opacity-100'); ui.uploadPanel.classList.add('translate-x-full'); document.body.style.overflow = ''; setTimeout(() => { ui.uploadOffcanvas.classList.add('hidden'); }, 300); }
             ui.openUploadBtn.addEventListener('click', openUploadPanel); ui.closeUploadPanel.addEventListener('click', closeUploadPanel); ui.uploadOffcanvas.addEventListener('click', closeUploadPanel);
