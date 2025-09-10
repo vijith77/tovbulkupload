@@ -1,1 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Copy Management Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Tailwind's gray-50 */
+        }
+        .kpi-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .view-toggle button.active {
+            background-color: #6d28d9; /* Tailwind's violet-700 */
+            color: white;
+        }
+        .kanban-column {
+            flex: 1 1 0px;
+            min-width: 280px;
+        }
+        #upload-panel {
+            transition: transform .3s ease-in-out;
+        }
+        #upload-offcanvas {
+            transition: opacity .3s ease-in-out;
+        }
+        .dragover {
+            border-color: #6d28d9;
+            background-color: #f5f3ff;
+        }
+        #departmentChart, #statusChart {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- New Top Header -->
+    <header class="bg-white shadow-md sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex-shrink-0">
+                     <svg class="h-8 w-auto" viewBox="0 0 120 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14.28 23.32H20.28V26.52H11.04V4.6H14.28V23.32Z" fill="#111827"/>
+                        <path d="M23.6111 20.38C23.6111 22.04 24.1111 23.4 25.1111 24.46C26.1111 25.52 27.4111 26.05 29.0111 26.05C30.6111 26.05 31.9111 25.52 32.9111 24.46C33.9111 23.4 34.4111 22.04 34.4111 20.38V10.78H31.1711V20.14C31.1711 21.49 30.2911 22.165 28.5311 22.165C26.7711 22.165 25.8911 21.49 25.8911 20.14V10.78H22.6511L23.6111 20.38Z" fill="#111827"/>
+                        <path d="M42.3423 26.53C40.2423 26.53 38.6023 25.96 37.4223 24.82C36.2423 23.68 35.6523 22.165 35.6523 20.275C35.6523 18.385 36.2423 16.87 37.4223 15.73C38.6023 14.59 40.2423 14.02 42.3423 14.02C43.7623 14.02 44.9323 14.335 45.8523 14.965L45.0723 17.755C44.4123 17.38 43.5723 17.195 42.5523 17.195C41.1123 17.195 40.0623 17.65 39.4023 18.56C38.7423 19.47 38.4123 20.485 38.4123 21.605C38.4123 23.95 39.7323 25.12 42.3723 25.12C43.5123 25.12 44.4723 24.895 45.2523 24.445L46.1223 27.145C45.1323 27.64 43.9023 27.88 42.4323 27.88L42.3423 26.53Z" fill="#111827"/>
+                        <path d="M57.3995 21.37C57.3995 23.35 56.8095 24.865 55.6295 25.915C54.4495 26.965 52.8495 27.5 50.8295 27.5C48.8095 27.5 47.2095 26.965 46.0295 25.915C44.8495 24.865 44.2595 23.35 44.2595 21.37C44.2595 19.39 44.8495 17.89 46.0295 16.87C47.2095 15.85 48.8095 15.34 50.8295 15.34C52.8495 15.34 54.4495 15.85 55.6295 16.87C56.8095 17.89 57.3995 19.39 57.3995 21.37ZM47.4995 21.37C47.4995 22.9 47.9595 24.055 48.8795 24.835C49.7995 25.615 50.9195 26.005 52.2395 26.005C53.5595 26.005 54.6795 25.615 55.5995 24.835C56.5195 24.055 56.9795 22.9 56.9795 21.37C56.9795 19.84 56.5195 18.685 55.5995 17.905C54.6795 17.125 53.5595 16.735 52.2395 16.735C50.9195 16.735 49.7995 17.125 48.8795 17.905C47.9595 18.685 47.4995 19.84 47.4995 21.37Z" fill="#111827"/>
+                        <text x="62" y="24" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#4f46e5">TECHNOLOGY</text>
+                    </svg>
+                </div>
+                <!-- Search Bar -->
+                <div class="flex-1 flex justify-center px-2 lg:ml-6 lg:justify-center">
+                    <div class="max-w-lg w-full lg:max-w-xs">
+                        <label for="search" class="sr-only">Search</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                            </div>
+                            <input id="search-input" name="search" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-violet-500 focus:border-violet-500 sm:text-sm" placeholder="Search Item Number..." type="search">
+                        </div>
+                    </div>
+                </div>
+                <!-- Site Selector -->
+                <div class="flex items-center">
+                    <div class="ml-4 relative">
+                        <div>
+                            <select id="site-selector" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm rounded-md">
+                                <option>All Sites</option>
+                                <option>Site A</option>
+                                <option>Site B</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <!-- Header -->
+        <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Copy Management Hub</h1>
+                <p class="text-gray-500">An at-a-glance overview of your product copy status.</p>
+            </div>
+            <button id="open-upload-btn" class="bg-violet-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-opacity-75">
+                + Upload Copy File
+            </button>
+        </div>
+
+        <!-- Filter Status -->
+        <div id="filter-status-bar" class="hidden items-center justify-between bg-violet-100 text-violet-800 p-3 rounded-lg mb-6">
+            <p id="filter-status-text" class="text-sm font-medium"></p>
+            <button id="reset-filters-btn" class="text-sm font-semibold hover:underline">Reset Filters</button>
+        </div>
+
+        <!-- 1. KPIs -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="kpi-card bg-white p-4 rounded-lg shadow">
+                <h3 class="text-sm font-medium text-gray-500">Total Items</h3>
+                <p id="kpi-total-items" class="text-3xl font-bold text-gray-900 mt-1">0</p>
+            </div>
+            <div class="kpi-card bg-white p-4 rounded-lg shadow">
+                <h3 class="text-sm font-medium text-gray-500">Content Ready</h3>
+                <p id="kpi-content-ready" class="text-3xl font-bold text-green-600 mt-1">0%</p>
+            </div>
+            <div class="kpi-card bg-white p-4 rounded-lg shadow">
+                <h3 class="text-sm font-medium text-gray-500">Due This Week</h3>
+                <p id="kpi-due-week" class="text-3xl font-bold text-blue-600 mt-1">0</p>
+            </div>
+            <div class="kpi-card bg-white p-4 rounded-lg shadow">
+                <h3 class="text-sm font-medium text-gray-500">Status Deleted</h3>
+                <p id="kpi-issues" class="text-3xl font-bold text-red-600 mt-1">0</p>
+            </div>
+        </div>
+
+        <!-- 2. Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-4 rounded-lg shadow col-span-1 lg:col-span-2">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">Items by Department</h3>
+                <canvas id="departmentChart"></canvas>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">Copy Status</h3>
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- 3. Data Views -->
+        <div class="bg-white p-4 rounded-lg shadow">
+            <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
+                 <h3 class="text-lg font-semibold text-gray-700">Product Items</h3>
+                <div class="view-toggle flex items-center border border-gray-200 rounded-lg p-1">
+                    <button id="kanbanBtn" class="px-3 py-1 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-100 focus:outline-none">Kanban</button>
+                    <button id="gridBtn" class="px-3 py-1 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-100 focus:outline-none active">Grid</button>
+                </div>
+            </div>
+
+            <div id="kanbanView" class="hidden"></div>
+            <div id="gridView"></div>
+        </div>
+    </main>
+
+    <!-- Gemini AI Modal -->
+    <div id="aiModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">✨ AI-Generated Product Copy</h3>
+                <div id="modal-content" class="mt-2 px-7 py-3">
+                     <div id="loading-spinner" class="py-4">
+                        <svg class="animate-spin h-8 w-8 text-violet-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p class="text-sm text-gray-500 mt-2">Generating... please wait.</p>
+                    </div>
+                    <textarea id="ai-generated-text" class="w-full h-40 p-2 border rounded-md bg-gray-50 hidden" readonly></textarea>
+                    <p id="error-message" class="text-red-500 text-sm hidden"></p>
+                </div>
+                <div class="items-center px-4 py-3 space-y-2">
+                    <button id="copy-btn" class="hidden w-full px-4 py-2 bg-green-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-300">Copy to Clipboard</button>
+                    <button id="close-modal-btn" class="w-full px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Off-canvas Upload Panel -->
+    <div id="upload-offcanvas" class="fixed inset-0 bg-gray-900 bg-opacity-50 z-40 hidden"></div>
+    <div id="upload-panel" class="fixed top-0 right-0 h-full w-full max-w-sm bg-white shadow-xl z-50 transform translate-x-full">
+        <div class="p-6 h-full flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Upload New Data</h2>
+                <button id="close-upload-panel" class="text-gray-500 text-2xl font-bold hover:text-gray-800">&times;</button>
+            </div>
+            <div id="drop-zone" class="flex-grow flex flex-col justify-center items-center border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50 hover:bg-gray-100 cursor-pointer">
+                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-4-4V7a4 4 0 014-4h10a4 4 0 014 4v5a4 4 0 01-4 4H7z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 16v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2m10-6l-4-4m0 0l-4 4m4-4v12"></path></svg>
+                <p class="mt-2 text-gray-500">Drag & drop your CSV file here</p>
+                <p class="text-gray-400 my-2">or</p>
+                <label for="file-upload" class="bg-violet-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-violet-700 cursor-pointer">Browse Files</label>
+                <input type="file" id="file-upload" class="hidden" accept=".csv">
+            </div>
+            <div id="upload-status" class="mt-4 text-center"></div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- STATE MANAGEMENT ---
+            let masterData = [];
+            let currentData = [];
+            const sampleData = [
+                { "Style ID": "st100000", "Brand": "Next", "Department": "Womenswear", "Category": "Dress", "Item Status": "Estimated", "Content Ready": "True", "Launch Date": "23/09/2025" },
+                { "Style ID": "st100001", "Brand": "Next", "Department": "Womenswear", "Category": "Shirts", "Item Status": "Estimated", "Content Ready": "True", "Launch Date": "23/09/2025" },
+                { "Style ID": "st100002", "Brand": "Nike", "Department": "Menswear", "Category": "Jeans", "Item Status": "CopyComplete", "Content Ready": "True", "Launch Date": "23/09/2025" },
+                { "Style ID": "st100003", "Brand": "Next", "Department": "Menswear", "Category": "T-Shirts", "Item Status": "Estimated", "Content Ready": "False", "Launch Date": "23/09/2025" },
+                { "Style ID": "st100004", "Brand": "Next", "Department": "Childswear", "Category": "Jumpers", "Item Status": "CopyComplete", "Content Ready": "True", "Launch Date": "23/09/2025" },
+                { "Style ID": "st100005", "Brand": "Next", "Department": "Homewear", "Category": "Trainers", "Item Status": "Estimated", "Content Ready": "False", "Launch Date": "23/09/2025" },
+                { "Style ID": "st100006", "Brand": "Next", "Department": "Childswear", "Category": "Socks", "Item Status": "Deleted", "Content Ready": "False", "Launch Date": "23/09/2025" },
+                { "Style ID": "st100007", "Brand": "Next", "Department": "Homewear", "Category": "Plates", "Item Status": "Deleted", "Content Ready": "True", "Launch Date": "23/09/2025" },
+            ];
+            let departmentChart, statusChart;
+
+            // --- UI ELEMENT GETTERS ---
+            const ui = {
+                searchInput: document.getElementById('search-input'),
+                filterStatusBar: document.getElementById('filter-status-bar'),
+                filterStatusText: document.getElementById('filter-status-text'),
+                resetFiltersBtn: document.getElementById('reset-filters-btn'),
+                kanbanBtn: document.getElementById('kanbanBtn'),
+                gridBtn: document.getElementById('gridBtn'),
+                kanbanView: document.getElementById('kanbanView'),
+                gridView: document.getElementById('gridView'),
+                departmentChartEl: document.getElementById('departmentChart'),
+                statusChartEl: document.getElementById('statusChart'),
+                // ... (rest of the UI elements)
+                aiModal: document.getElementById('aiModal'),
+                closeModalBtn: document.getElementById('close-modal-btn'),
+                loadingSpinner: document.getElementById('loading-spinner'),
+                aiGeneratedText: document.getElementById('ai-generated-text'),
+                errorMessage: document.getElementById('error-message'),
+                copyBtn: document.getElementById('copy-btn'),
+                uploadOffcanvas: document.getElementById('upload-offcanvas'),
+                uploadPanel: document.getElementById('upload-panel'),
+                openUploadBtn: document.getElementById('open-upload-btn'),
+                closeUploadPanel: document.getElementById('close-upload-panel'),
+                dropZone: document.getElementById('drop-zone'),
+                fileUpload: document.getElementById('file-upload'),
+                uploadStatus: document.getElementById('upload-status'),
+            };
+            
+            function setData(data) {
+                masterData = data;
+                applyFilters();
+            }
+
+            function applyFilters(filters = {}) {
+                let filteredData = [...masterData];
+                
+                // Search Filter
+                const searchTerm = ui.searchInput.value.toLowerCase();
+                if (searchTerm) {
+                    filteredData = filteredData.filter(item => 
+                        item['Style ID'].toLowerCase().includes(searchTerm) || 
+                        item['Category'].toLowerCase().includes(searchTerm)
+                    );
+                }
+
+                // Chart Filters
+                if (filters.department) {
+                    filteredData = filteredData.filter(item => item.Department === filters.department);
+                }
+                if (filters.status) {
+                     filteredData = filteredData.filter(item => item['Item Status'] === filters.status);
+                }
+                
+                currentData = filteredData;
+                renderDashboard(currentData);
+            }
+
+            // --- RENDER FUNCTIONS ---
+            function renderDashboard(data) {
+                renderKPIs(data);
+                renderCharts(data);
+                renderGridView(data);
+                renderKanbanView(data);
+            }
+
+            function renderKPIs(data) {
+                const totalItems = data.length;
+                const contentReady = data.filter(d => d['Content Ready'] === 'True').length;
+                const deleted = data.filter(d => d['Item Status'] === 'Deleted').length;
+                const dueThisWeek = data.filter(d => {
+                    if (!d['Launch Date']) return false;
+                    const parts = d['Launch Date'].split('/');
+                    if(parts.length !== 3) return false;
+                    const launchDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                    const today = new Date();
+                    const oneWeekFromNow = new Date();
+                    oneWeekFromNow.setDate(today.getDate() + 7);
+                    return launchDate >= today && launchDate <= oneWeekFromNow;
+                }).length;
+                
+                document.getElementById('kpi-total-items').textContent = totalItems;
+                document.getElementById('kpi-content-ready').textContent = `${totalItems > 0 ? Math.round((contentReady / totalItems) * 100) : 0}%`;
+                document.getElementById('kpi-due-week').textContent = dueThisWeek;
+                document.getElementById('kpi-issues').textContent = deleted;
+            }
+            
+            function renderCharts(data) {
+                const departmentData = masterData.reduce((acc, item) => { // Always render charts with master data
+                    acc[item.Department] = (acc[item.Department] || 0) + 1;
+                    return acc;
+                }, {});
+
+                const statusData = masterData.reduce((acc, item) => {
+                    acc[item['Item Status']] = (acc[item['Item Status']] || 0) + 1;
+                    return acc;
+                }, {});
+
+                if (departmentChart) departmentChart.destroy();
+                departmentChart = new Chart(ui.departmentChartEl.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(departmentData),
+                        datasets: [{ data: Object.values(departmentData), backgroundColor: 'rgba(109, 40, 217, 0.6)', borderColor: 'rgba(109, 40, 217, 1)', borderWidth: 1, borderRadius: 4 }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                });
+
+                if (statusChart) statusChart.destroy();
+                statusChart = new Chart(ui.statusChartEl.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(statusData),
+                        datasets: [{ data: Object.values(statusData), backgroundColor: ['rgba(22, 163, 74, 0.7)', 'rgba(234, 179, 8, 0.7)', 'rgba(220, 38, 38, 0.7)'], borderColor: ['#16a34a', '#eab308', '#dc2626'], borderWidth: 1 }]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'top' } } }
+                });
+            }
+
+            function renderGridView(data) {
+                const statusColors = { 'Estimated': 'bg-yellow-100 text-yellow-800', 'CopyComplete': 'bg-green-100 text-green-800', 'Deleted': 'bg-red-100 text-red-800' };
+                let tableHTML = `<div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Style ID</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item Status</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Launch Date</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">${data.map(row => `<tr><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${row['Style ID']}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${row.Brand}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${row.Department}</td><td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors[row['Item Status']] || 'bg-gray-100 text-gray-800'}">${row['Item Status']}</span></td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${row['Launch Date']}</td><td class="px-6 py-4 whitespace-nowrap text-sm font-medium">${row['Item Status'] !== 'Deleted' ? `<button class="generate-copy-btn text-violet-600 hover:text-violet-900" data-details='${JSON.stringify({brand: row.Brand, department: row.Department, category: row.Category})}' >✨ Generate Copy</button>` : ''}</td></tr>`).join('')}</tbody></table></div>`;
+                ui.gridView.innerHTML = tableHTML;
+            }
+
+            function renderKanbanView(data) {
+                const columns = data.reduce((acc, item) => {
+                    const status = item['Item Status'];
+                    if (!acc[status]) acc[status] = [];
+                    acc[status].push(item);
+                    return acc;
+                }, {});
+                let kanbanHTML = `<div class="flex overflow-x-auto space-x-4 p-2 bg-gray-100 rounded-lg">`;
+                for (const status in columns) {
+                    kanbanHTML += `<div class="kanban-column"><h4 class="font-semibold text-gray-700 mb-3 px-2">${status} (${columns[status].length})</h4><div class="space-y-3">${columns[status].map(item => `<div class="bg-white p-3 rounded-md shadow-sm border ${status === 'Deleted' ? 'opacity-70' : ''}"><p class="font-semibold text-gray-800">${item['Style ID']} - ${item.Category}</p><p class="text-sm text-gray-500">${item.Brand} / ${item.Department}</p><div class="flex justify-between items-center mt-2"><span class="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded-full">${item['Launch Date']}</span>${status !== 'Deleted' ? `<button class="generate-copy-btn text-sm text-violet-600 hover:text-violet-800 font-semibold" data-details='${JSON.stringify({brand: item.Brand, department: item.Department, category: item.Category})}'>✨ Generate</button>` : ''}</div></div>`).join('')}</div></div>`;
+                }
+                kanbanHTML += `</div>`;
+                ui.kanbanView.innerHTML = kanbanHTML;
+            }
+            
+            function updateFilterStatus(filterType, value) {
+                if (value) {
+                    ui.filterStatusText.textContent = `Filtered by ${filterType}: ${value}`;
+                    ui.filterStatusBar.classList.remove('hidden');
+                } else {
+                     ui.filterStatusBar.classList.add('hidden');
+                }
+            }
+            
+            // --- EVENT LISTENERS ---
+            ui.searchInput.addEventListener('keyup', () => applyFilters());
+            
+            ui.resetFiltersBtn.addEventListener('click', () => {
+                ui.searchInput.value = '';
+                updateFilterStatus(null);
+                applyFilters();
+            });
+
+            function setupChartClickHandler(chart, element, filterKey, filterName) {
+                element.onclick = (evt) => {
+                    const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                    if (points.length) {
+                        const firstPoint = points[0];
+                        const label = chart.data.labels[firstPoint.index];
+                        updateFilterStatus(filterName, label);
+                        applyFilters({ [filterKey]: label });
+                    }
+                }
+            }
+            
+            // Wait for charts to be created before adding click handlers
+            setTimeout(() => {
+                setupChartClickHandler(departmentChart, ui.departmentChartEl, 'department', 'Department');
+                setupChartClickHandler(statusChart, ui.statusChartEl, 'status', 'Status');
+            }, 500);
+
+
+            ui.kanbanBtn.addEventListener('click', () => { ui.kanbanView.style.display = 'block'; ui.gridView.style.display = 'none'; ui.kanbanBtn.classList.add('active'); ui.gridBtn.classList.remove('active'); });
+            ui.gridBtn.addEventListener('click', () => { ui.gridView.style.display = 'block'; ui.kanbanView.style.display = 'none'; ui.gridBtn.classList.add('active'); ui.kanbanBtn.classList.remove('active'); });
+
+            // --- GEMINI AI & UPLOAD MODAL LOGIC (UNCHANGED) ---
+            // ... [Same logic as before for AI Modal and Upload Panel] ...
+            function openAiModal() { ui.aiModal.style.display = 'block'; ui.loadingSpinner.style.display = 'block'; ui.aiGeneratedText.style.display = 'none'; ui.errorMessage.style.display = 'none'; ui.copyBtn.style.display = 'none'; ui.aiGeneratedText.value = ''; };
+            ui.closeModalBtn.addEventListener('click', () => ui.aiModal.style.display = 'none');
+            ui.copyBtn.addEventListener('click', () => { ui.aiGeneratedText.select(); document.execCommand('copy'); ui.copyBtn.textContent = 'Copied!'; setTimeout(() => { ui.copyBtn.textContent = 'Copy to Clipboard'; }, 2000); });
+            document.body.addEventListener('click', (event) => { if (event.target.classList.contains('generate-copy-btn')) { const details = JSON.parse(event.target.dataset.details); openAiModal(); generateProductCopy(details); } });
+            async function generateProductCopy(details) { const { brand, department, category } = details; const apiKey = ""; const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`; const systemPrompt = "You are an expert e-commerce copywriter. Your goal is to write a short, engaging, and SEO-friendly product description. Use a friendly and persuasive tone. Include a headline and a short paragraph."; const userQuery = `Generate a product description for the following item:\n- Brand: ${brand}\n- Department: ${department}\n- Category: ${category}`; try { const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: userQuery }] }], systemInstruction: { parts: [{ text: systemPrompt }] }, }) }); if (!response.ok) throw new Error(`API error: ${response.statusText}`); const result = await response.json(); const text = result.candidates?.[0]?.content?.parts?.[0]?.text; if (text) { ui.aiGeneratedText.value = text; ui.aiGeneratedText.style.display = 'block'; ui.copyBtn.style.display = 'block'; } else { throw new Error("No content received from API."); } } catch (error) { console.error("Error generating copy:", error); ui.errorMessage.textContent = `Failed to generate copy. ${error.message}`; ui.errorMessage.style.display = 'block'; } finally { ui.loadingSpinner.style.display = 'none'; } }
+            function openUploadPanel() { ui.uploadOffcanvas.classList.remove('hidden'); document.body.style.overflow = 'hidden'; setTimeout(() => { ui.uploadOffcanvas.classList.add('opacity-100'); ui.uploadPanel.classList.remove('translate-x-full'); }, 10); }
+            function closeUploadPanel() { ui.uploadOffcanvas.classList.remove('opacity-100'); ui.uploadPanel.classList.add('translate-x-full'); document.body.style.overflow = ''; setTimeout(() => { ui.uploadOffcanvas.classList.add('hidden'); }, 300); }
+            ui.openUploadBtn.addEventListener('click', openUploadPanel); ui.closeUploadPanel.addEventListener('click', closeUploadPanel); ui.uploadOffcanvas.addEventListener('click', closeUploadPanel);
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => { ui.dropZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false); });
+            ['dragenter', 'dragover'].forEach(eventName => { ui.dropZone.addEventListener(eventName, () => ui.dropZone.classList.add('dragover'), false); });
+            ['dragleave', 'drop'].forEach(eventName => { ui.dropZone.addEventListener(eventName, () => ui.dropZone.classList.remove('dragover'), false); });
+            ui.dropZone.addEventListener('drop', e => { handleFile(e.dataTransfer.files[0]); }); ui.fileUpload.addEventListener('change', e => { handleFile(e.target.files[0]); });
+            function handleFile(file) { if (file && file.type === "text/csv") { ui.uploadStatus.innerHTML = `<p class="text-sm text-gray-600">Processing "${file.name}"...</p>`; const reader = new FileReader(); reader.onload = function(e) { try { const data = parseCSV(e.target.result); setData(data); ui.uploadStatus.innerHTML = `<p class="text-sm text-green-600">Successfully updated dashboard with ${data.length} items!</p>`; setTimeout(closeUploadPanel, 1500); } catch (error) { ui.uploadStatus.innerHTML = `<p class="text-sm text-red-600">Error parsing CSV: ${error.message}</p>`; } }; reader.readAsText(file); } else { ui.uploadStatus.innerHTML = '<p class="text-sm text-red-600">Please select a valid CSV file.</p>'; } }
+            function parseCSV(text) { const lines = text.replace(/\r/g, '').split('\n'); const header = lines[0].split(',').map(h => h.trim()); const data = []; for (let i = 1; i < lines.length; i++) { if (!lines[i]) continue; const values = lines[i].split(','); const entry = {}; for (let j = 0; j < header.length; j++) { entry[header[j]] = values[j] ? values[j].trim() : ''; } data.push(entry); } return data; }
+            
+            // --- INITIALIZE APP ---
+            setData(sampleData);
+        });
+    </script>
+</body>
+</html>
+
 
