@@ -280,7 +280,7 @@
             // --- RENDER FUNCTIONS ---
             function renderDashboard(data) {
                 renderKPIs(data);
-                renderCharts(data);
+                renderCharts(); // Charts now render based on global state, not passed data
                 renderGridView(data);
                 renderKanbanView(data);
             }
@@ -306,37 +306,61 @@
                 document.getElementById('kpi-issues').textContent = deleted;
             }
             
-            function renderCharts(data) {
-                const departmentData = masterData.reduce((acc, item) => { // Always render charts with master data
+            function renderCharts() {
+                // Data for Department Chart: based on masterData, but filtered by any active status filter.
+                let departmentSourceData = activeFilters.status ? masterData.filter(item => item['Item Status'] === activeFilters.status) : masterData;
+                const departmentData = departmentSourceData.reduce((acc, item) => {
                     acc[item.Department] = (acc[item.Department] || 0) + 1;
                     return acc;
                 }, {});
 
-                const statusData = masterData.reduce((acc, item) => {
+                // Data for Status Chart: based on masterData, but filtered by any active department filter.
+                let statusSourceData = activeFilters.department ? masterData.filter(item => item.Department === activeFilters.department) : masterData;
+                const statusData = statusSourceData.reduce((acc, item) => {
                     acc[item['Item Status']] = (acc[item['Item Status']] || 0) + 1;
                     return acc;
                 }, {});
+
+                // Highlighting for selected department
+                const departmentLabels = Object.keys(departmentData);
+                const departmentColors = departmentLabels.map(dep => 
+                    dep === activeFilters.department ? 'rgba(109, 40, 217, 1)' : 'rgba(109, 40, 217, 0.6)'
+                );
 
                 if (departmentChart) departmentChart.destroy();
                 departmentChart = new Chart(ui.departmentChartEl.getContext('2d'), {
                     type: 'bar',
                     data: {
-                        labels: Object.keys(departmentData),
-                        datasets: [{ data: Object.values(departmentData), backgroundColor: 'rgba(109, 40, 217, 0.6)', borderColor: 'rgba(109, 40, 217, 1)', borderWidth: 1, borderRadius: 4 }]
+                        labels: departmentLabels,
+                        datasets: [{ data: Object.values(departmentData), backgroundColor: departmentColors, borderColor: 'rgba(109, 40, 217, 1)', borderWidth: 1, borderRadius: 4 }]
                     },
                     options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
                 });
+
+                // Highlighting for selected status
+                const statusLabels = Object.keys(statusData);
+                const baseColors = {'Estimated': 'rgba(234, 179, 8, 0.7)', 'CopyComplete': 'rgba(22, 163, 74, 0.7)', 'Deleted': 'rgba(220, 38, 38, 0.7)'};
+                const highlightColors = {'Estimated': '#eab308', 'CopyComplete': '#16a34a', 'Deleted': '#dc2626'};
+                const statusBackgroundColors = statusLabels.map(status =>
+                    status === activeFilters.status ? highlightColors[status] || '#6d28d9' : baseColors[status] || 'rgba(107, 114, 128, 0.7)'
+                );
 
                 if (statusChart) statusChart.destroy();
                 statusChart = new Chart(ui.statusChartEl.getContext('2d'), {
                     type: 'doughnut',
                     data: {
-                        labels: Object.keys(statusData),
-                        datasets: [{ data: Object.values(statusData), backgroundColor: ['rgba(22, 163, 74, 0.7)', 'rgba(234, 179, 8, 0.7)', 'rgba(220, 38, 38, 0.7)'], borderColor: ['#16a34a', '#eab308', '#dc2626'], borderWidth: 1 }]
+                        labels: statusLabels,
+                        datasets: [{ 
+                            data: Object.values(statusData), 
+                            backgroundColor: statusBackgroundColors, 
+                            borderColor: statusLabels.map(s => highlightColors[s] || '#6b7280'),
+                            borderWidth: 1 
+                        }]
                     },
                     options: { responsive: true, plugins: { legend: { position: 'top' } } }
                 });
             }
+
 
             function renderGridView(data) {
                 const statusColors = { 'Estimated': 'bg-yellow-100 text-yellow-800', 'CopyComplete': 'bg-green-100 text-green-800', 'Deleted': 'bg-red-100 text-red-800' };
@@ -395,7 +419,13 @@
                     if (points.length) {
                         const firstPoint = points[0];
                         const label = chart.data.labels[firstPoint.index];
-                        activeFilters[filterKey] = label;
+                        
+                        // Toggle filter
+                        if (activeFilters[filterKey] === label) {
+                            delete activeFilters[filterKey]; // Remove if clicking the same one again
+                        } else {
+                            activeFilters[filterKey] = label; // Set or change filter
+                        }
                         applyFilters();
                     }
                 }
@@ -434,5 +464,4 @@
     </script>
 </body>
 </html>
-
 
