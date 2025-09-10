@@ -337,11 +337,10 @@
                         responsive: true, 
                         plugins: { legend: { display: false } }, 
                         scales: { y: { beginAtZero: true } },
-                        onClick: (evt) => {
-                            const points = departmentChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                            if (points.length) {
-                                const firstPoint = points[0];
-                                const label = departmentChart.data.labels[firstPoint.index];
+                        onClick: (evt, elements) => {
+                            if (elements.length > 0) {
+                                const clickedIndex = elements[0].index;
+                                const label = departmentChart.data.labels[clickedIndex];
                                 if (activeFilters.department === label) {
                                     delete activeFilters.department;
                                 } else {
@@ -376,11 +375,10 @@
                     options: { 
                         responsive: true, 
                         plugins: { legend: { position: 'top' } },
-                        onClick: (evt) => {
-                            const points = statusChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                            if (points.length) {
-                                const firstPoint = points[0];
-                                const label = statusChart.data.labels[firstPoint.index];
+                        onClick: (evt, elements) => {
+                            if (elements.length > 0) {
+                                const clickedIndex = elements[0].index;
+                                const label = statusChart.data.labels[clickedIndex];
                                 if (activeFilters.status === label) {
                                     delete activeFilters.status;
                                 } else {
