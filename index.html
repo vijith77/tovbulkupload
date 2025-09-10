@@ -304,25 +304,6 @@
                 document.getElementById('kpi-due-week').textContent = dueThisWeek;
                 document.getElementById('kpi-issues').textContent = deleted;
             }
-            
-            function setupChartClickHandler(chart, element, filterKey) {
-                element.onclick = (evt) => {
-                    if (!chart) return;
-                    const points = chart.getElementsAtEventForMode(evt, 'native', { intersect: true }, true);
-                    if (points.length) {
-                        const firstPoint = points[0];
-                        const label = chart.data.labels[firstPoint.index];
-                        
-                        // Toggle filter
-                        if (activeFilters[filterKey] === label) {
-                            delete activeFilters[filterKey]; // Remove if clicking the same one again
-                        } else {
-                            activeFilters[filterKey] = label; // Set or change filter
-                        }
-                        applyFilters();
-                    }
-                }
-            }
 
             function renderCharts() {
                 // Data for Department Chart: based on masterData, but filtered by any active status filter.
@@ -352,10 +333,25 @@
                         labels: departmentLabels,
                         datasets: [{ data: Object.values(departmentData), backgroundColor: departmentColors, borderColor: 'rgba(109, 40, 217, 1)', borderWidth: 1, borderRadius: 4 }]
                     },
-                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                    options: { 
+                        responsive: true, 
+                        plugins: { legend: { display: false } }, 
+                        scales: { y: { beginAtZero: true } },
+                        onClick: (evt) => {
+                            const points = departmentChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                            if (points.length) {
+                                const firstPoint = points[0];
+                                const label = departmentChart.data.labels[firstPoint.index];
+                                if (activeFilters.department === label) {
+                                    delete activeFilters.department;
+                                } else {
+                                    activeFilters.department = label;
+                                }
+                                applyFilters();
+                            }
+                        }
+                    }
                 });
-                setupChartClickHandler(departmentChart, ui.departmentChartEl, 'department');
-
 
                 // Highlighting for selected status
                 const statusLabels = Object.keys(statusData);
@@ -377,9 +373,24 @@
                             borderWidth: 1 
                         }]
                     },
-                    options: { responsive: true, plugins: { legend: { position: 'top' } } }
+                    options: { 
+                        responsive: true, 
+                        plugins: { legend: { position: 'top' } },
+                        onClick: (evt) => {
+                            const points = statusChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                            if (points.length) {
+                                const firstPoint = points[0];
+                                const label = statusChart.data.labels[firstPoint.index];
+                                if (activeFilters.status === label) {
+                                    delete activeFilters.status;
+                                } else {
+                                    activeFilters.status = label;
+                                }
+                                applyFilters();
+                            }
+                        }
+                    }
                 });
-                setupChartClickHandler(statusChart, ui.statusChartEl, 'status');
             }
 
 
