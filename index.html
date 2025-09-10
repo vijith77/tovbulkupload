@@ -50,12 +50,16 @@
             <div class="flex items-center justify-between h-16">
                 <!-- Logo -->
                 <div class="flex-shrink-0">
-                     <svg class="h-8 w-auto" viewBox="0 0 120 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M14.28 23.32H20.28V26.52H11.04V4.6H14.28V23.32Z" fill="#111827"/>
-                        <path d="M23.6111 20.38C23.6111 22.04 24.1111 23.4 25.1111 24.46C26.1111 25.52 27.4111 26.05 29.0111 26.05C30.6111 26.05 31.9111 25.52 32.9111 24.46C33.9111 23.4 34.4111 22.04 34.4111 20.38V10.78H31.1711V20.14C31.1711 21.49 30.2911 22.165 28.5311 22.165C26.7711 22.165 25.8911 21.49 25.8911 20.14V10.78H22.6511L23.6111 20.38Z" fill="#111827"/>
-                        <path d="M42.3423 26.53C40.2423 26.53 38.6023 25.96 37.4223 24.82C36.2423 23.68 35.6523 22.165 35.6523 20.275C35.6523 18.385 36.2423 16.87 37.4223 15.73C38.6023 14.59 40.2423 14.02 42.3423 14.02C43.7623 14.02 44.9323 14.335 45.8523 14.965L45.0723 17.755C44.4123 17.38 43.5723 17.195 42.5523 17.195C41.1123 17.195 40.0623 17.65 39.4023 18.56C38.7423 19.47 38.4123 20.485 38.4123 21.605C38.4123 23.95 39.7323 25.12 42.3723 25.12C43.5123 25.12 44.4723 24.895 45.2523 24.445L46.1223 27.145C45.1323 27.64 43.9023 27.88 42.4323 27.88L42.3423 26.53Z" fill="#111827"/>
-                        <path d="M57.3995 21.37C57.3995 23.35 56.8095 24.865 55.6295 25.915C54.4495 26.965 52.8495 27.5 50.8295 27.5C48.8095 27.5 47.2095 26.965 46.0295 25.915C44.8495 24.865 44.2595 23.35 44.2595 21.37C44.2595 19.39 44.8495 17.89 46.0295 16.87C47.2095 15.85 48.8095 15.34 50.8295 15.34C52.8495 15.34 54.4495 15.85 55.6295 16.87C56.8095 17.89 57.3995 19.39 57.3995 21.37ZM47.4995 21.37C47.4995 22.9 47.9595 24.055 48.8795 24.835C49.7995 25.615 50.9195 26.005 52.2395 26.005C53.5595 26.005 54.6795 25.615 55.5995 24.835C56.5195 24.055 56.9795 22.9 56.9795 21.37C56.9795 19.84 56.5195 18.685 55.5995 17.905C54.6795 17.125 53.5595 16.735 52.2395 16.735C50.9195 16.735 49.7995 17.125 48.8795 17.905C47.9595 18.685 47.4995 19.84 47.4995 21.37Z" fill="#111827"/>
-                        <text x="62" y="24" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#4f46e5">TECHNOLOGY</text>
+                     <svg class="h-8 w-auto" viewBox="0 0 250 40" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Icon -->
+                        <g>
+                            <rect x="0" y="0" width="40" height="40" rx="8" fill="black"/>
+                            <path d="M11 29L11 11L18.5 11L11 22.5V29Z" fill="white"/>
+                            <path d="M29 11L29 29L21.5 29L29 17.5V11Z" fill="white"/>
+                        </g>
+                        <!-- Text -->
+                        <text x="50" y="22" font-family="Inter, sans-serif" font-size="20" font-weight="bold" fill="black">NEOS</text>
+                        <text x="50" y="35" font-family="Inter, sans-serif" font-size="7" font-weight="600" letter-spacing="1" fill="gray">NEXT ECOMMERCE OPERATING SUITE</text>
                     </svg>
                 </div>
                 <!-- Search Bar -->
@@ -201,6 +205,7 @@
             // --- STATE MANAGEMENT ---
             let masterData = [];
             let currentData = [];
+            let activeFilters = {};
             const sampleData = [
                 { "Style ID": "st100000", "Brand": "Next", "Department": "Womenswear", "Category": "Dress", "Item Status": "Estimated", "Content Ready": "True", "Launch Date": "23/09/2025" },
                 { "Style ID": "st100001", "Brand": "Next", "Department": "Womenswear", "Category": "Shirts", "Item Status": "Estimated", "Content Ready": "True", "Launch Date": "23/09/2025" },
@@ -243,31 +248,33 @@
             
             function setData(data) {
                 masterData = data;
+                activeFilters = {};
                 applyFilters();
             }
 
-            function applyFilters(filters = {}) {
+            function applyFilters() {
                 let filteredData = [...masterData];
                 
                 // Search Filter
                 const searchTerm = ui.searchInput.value.toLowerCase();
                 if (searchTerm) {
                     filteredData = filteredData.filter(item => 
-                        item['Style ID'].toLowerCase().includes(searchTerm) || 
-                        item['Category'].toLowerCase().includes(searchTerm)
+                        (item['Style ID'] || '').toLowerCase().includes(searchTerm) || 
+                        (item['Category'] || '').toLowerCase().includes(searchTerm)
                     );
                 }
 
-                // Chart Filters
-                if (filters.department) {
-                    filteredData = filteredData.filter(item => item.Department === filters.department);
+                // Chart Filters from state
+                if (activeFilters.department) {
+                    filteredData = filteredData.filter(item => item.Department === activeFilters.department);
                 }
-                if (filters.status) {
-                     filteredData = filteredData.filter(item => item['Item Status'] === filters.status);
+                if (activeFilters.status) {
+                     filteredData = filteredData.filter(item => item['Item Status'] === activeFilters.status);
                 }
                 
                 currentData = filteredData;
                 renderDashboard(currentData);
+                updateFilterStatus();
             }
 
             // --- RENDER FUNCTIONS ---
@@ -352,40 +359,52 @@
                 ui.kanbanView.innerHTML = kanbanHTML;
             }
             
-            function updateFilterStatus(filterType, value) {
-                if (value) {
-                    ui.filterStatusText.textContent = `Filtered by ${filterType}: ${value}`;
+            function updateFilterStatus() {
+                const filterParts = [];
+                if (activeFilters.department) {
+                    filterParts.push(`Department: <strong>${activeFilters.department}</strong>`);
+                }
+                if (activeFilters.status) {
+                    filterParts.push(`Status: <strong>${activeFilters.status}</strong>`);
+                }
+
+                if (filterParts.length > 0) {
+                    ui.filterStatusText.innerHTML = `Filtered by ${filterParts.join(' & ')}`;
                     ui.filterStatusBar.classList.remove('hidden');
+                    ui.filterStatusBar.classList.add('flex');
                 } else {
                      ui.filterStatusBar.classList.add('hidden');
+                     ui.filterStatusBar.classList.remove('flex');
                 }
             }
             
             // --- EVENT LISTENERS ---
-            ui.searchInput.addEventListener('keyup', () => applyFilters());
+            ui.searchInput.addEventListener('keyup', () => {
+                applyFilters();
+            });
             
             ui.resetFiltersBtn.addEventListener('click', () => {
                 ui.searchInput.value = '';
-                updateFilterStatus(null);
+                activeFilters = {};
                 applyFilters();
             });
 
-            function setupChartClickHandler(chart, element, filterKey, filterName) {
+            function setupChartClickHandler(chart, element, filterKey) {
                 element.onclick = (evt) => {
                     const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
                     if (points.length) {
                         const firstPoint = points[0];
                         const label = chart.data.labels[firstPoint.index];
-                        updateFilterStatus(filterName, label);
-                        applyFilters({ [filterKey]: label });
+                        activeFilters[filterKey] = label;
+                        applyFilters();
                     }
                 }
             }
             
             // Wait for charts to be created before adding click handlers
             setTimeout(() => {
-                setupChartClickHandler(departmentChart, ui.departmentChartEl, 'department', 'Department');
-                setupChartClickHandler(statusChart, ui.statusChartEl, 'status', 'Status');
+                setupChartClickHandler(departmentChart, ui.departmentChartEl, 'department');
+                setupChartClickHandler(statusChart, ui.statusChartEl, 'status');
             }, 500);
 
 
