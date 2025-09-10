@@ -105,7 +105,13 @@
         <!-- Filter Status -->
         <div id="filter-status-bar" class="hidden items-center justify-between bg-violet-100 text-violet-800 p-3 rounded-lg mb-6">
             <p id="filter-status-text" class="text-sm font-medium"></p>
-            <button id="reset-filters-btn" class="text-sm font-semibold hover:underline">Reset Filters</button>
+            <button id="reset-filters-btn" class="bg-violet-200 text-violet-700 font-semibold py-1 px-3 rounded-md shadow-sm hover:bg-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-opacity-75 text-sm flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16">
+                  <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/>
+                  <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/>
+                </svg>
+                Reset Filters
+            </button>
         </div>
 
         <!-- 1. KPIs -->
@@ -337,10 +343,10 @@
                         responsive: true, 
                         plugins: { legend: { display: false } }, 
                         scales: { y: { beginAtZero: true } },
-                        onClick: (evt, elements) => {
+                        onClick: (evt, elements, chart) => {
                             if (elements.length > 0) {
                                 const clickedIndex = elements[0].index;
-                                const label = departmentChart.data.labels[clickedIndex];
+                                const label = chart.data.labels[clickedIndex];
                                 if (activeFilters.department === label) {
                                     delete activeFilters.department;
                                 } else {
@@ -375,10 +381,10 @@
                     options: { 
                         responsive: true, 
                         plugins: { legend: { position: 'top' } },
-                        onClick: (evt, elements) => {
+                        onClick: (evt, elements, chart) => {
                             if (elements.length > 0) {
                                 const clickedIndex = elements[0].index;
-                                const label = statusChart.data.labels[clickedIndex];
+                                const label = chart.data.labels[clickedIndex];
                                 if (activeFilters.status === label) {
                                     delete activeFilters.status;
                                 } else {
